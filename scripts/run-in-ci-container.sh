@@ -3,10 +3,11 @@ set -euo pipefail
 
 IMAGE_NAME="${CI_TOOLBOX_IMAGE:-ai-platform-ci-tools:local}"
 COMMAND="${1:-all}"
-TRIVY_CACHE_DIR="${TRIVY_CACHE_DIR:-${PWD}/.trivy-cache}"
+TRIVY_CACHE_DIR="${TRIVY_CACHE_DIR:-/tmp/ai-platform-trivy-cache}"
 
 docker build -t "${IMAGE_NAME}" -f docker/ci/Dockerfile .
 mkdir -p "${TRIVY_CACHE_DIR}"
+chmod 0777 "${TRIVY_CACHE_DIR}"
 
 DOCKER_ARGS=(
   --rm

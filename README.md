@@ -242,7 +242,7 @@ scripts/run-in-ci-container.sh all
 
 This builds a reusable CI toolbox image, runs Python checks, builds and scans all
 service images, validates manifests, and applies them to Docker Desktop
-Kubernetes. Trivy cache is stored in `.trivy-cache/` and is ignored by Git.
+Kubernetes. Trivy cache is stored in `/tmp/ai-platform-trivy-cache` by default.
 
 Check services:
 
