@@ -28,13 +28,13 @@ jobs:
           python -m pip install -e ".[security]"
 
       - name: Lint
-        run: python -m ruff check services ai_platform tests
+        run: python -m ruff check services ai_platform tests scripts
 
       - name: Unit tests
         run: python -m pytest
 
       - name: Security scan
-        run: python -m bandit -r services ai_platform -x "services/user-service/tests,services/product-service/tests,services/order-service/tests"
+        run: python -m bandit -r services ai_platform scripts -x "services/user-service/tests,services/product-service/tests,services/order-service/tests,tests"
 
   docker:
     name: docker-build-and-scan

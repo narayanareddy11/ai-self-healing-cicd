@@ -260,3 +260,46 @@ git remote add origin git@github.com:<owner>/<repo>.git
 git branch -M main
 git push -u origin main
 ```
+
+## RCA-To-PR Control Plane
+
+The first AI control-plane slice is implemented under `ai_platform/`. It is
+deterministic by default and uses LangGraph for orchestration.
+
+Current flow:
+
+```text
+workflow failure metadata
+  -> signature/webhook parsing
+  -> failure classifier
+  -> focused evidence collector with secret redaction
+  -> RCA agent router
+  -> specialist RCA agent
+  -> remediation proposal
+  -> guardrail validation
+  -> allowlisted verification
+  -> GitHub Pull Request plan or PR creation
+```
+
+The RCA agent does not directly create a PR. It returns structured RCA output with
+observed evidence, inference, recommended fix, confidence, risk, and files to
+modify. The remediation and verification layers decide whether a PR can be raised.
+
+Supported deterministic routing:
+
+| Category | Agent |
+| --- | --- |
+| `PYTHON_BUILD` | `PythonRCAAgent` |
+| `UNIT_TEST` | `TestRCAAgent` |
+| `SECURITY` | `SecurityRCAAgent` |
+| `DOCKER` | `DockerRCAAgent` |
+| `KUBERNETES` | `KubernetesRCAAgent` |
+| `GITHUB_ACTIONS` | `GitHubActionsRCAAgent` |
+| `UNKNOWN` | `UnknownRCAAgent` |
+
+PR creation remains human-in-the-loop:
+
+- The AI creates a branch like `ai-remediation/<incident-id>`.
+- It commits only verified changed files.
+- It opens a PR with RCA, evidence, risk, confidence, and verification results.
+- It never merges the PR.
