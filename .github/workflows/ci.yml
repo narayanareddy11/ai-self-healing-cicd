@@ -74,11 +74,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
       - name: Validate Kubernetes manifests
         run: |
-          kubectl apply --dry-run=client --validate=false -f kubernetes/user-service
-          kubectl apply --dry-run=client --validate=false -f kubernetes/product-service
-          kubectl apply --dry-run=client --validate=false -f kubernetes/order-service
+          python -m pip install --upgrade pip
+          python -m pip install PyYAML
+          python scripts/validate-kubernetes-manifests.py

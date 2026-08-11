@@ -218,6 +218,7 @@ Run local quality checks:
 make lint
 make test
 make security
+python scripts/validate-kubernetes-manifests.py
 ```
 
 Build all service images:
