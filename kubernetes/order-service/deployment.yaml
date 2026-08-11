@@ -16,8 +16,8 @@ spec:
     spec:
       containers:
         - name: order-service
-          image: ai-order-service:local
-          imagePullPolicy: Never
+          image: localhost:5001/ai-order-service:local
+          imagePullPolicy: Always
           ports:
             - containerPort: 8000
           envFrom:

@@ -3,6 +3,21 @@ set -euo pipefail
 
 STAGE="${1:-all}"
 SHA_TAG="${GITHUB_SHA:-local}"
+REGISTRY_HOST="${LOCAL_REGISTRY_HOST:-localhost:5001}"
+REGISTRY_NAME="${LOCAL_REGISTRY_NAME:-ai-platform-registry}"
+
+ensure_registry() {
+  if docker ps --format '{{.Names}}' | grep -qx "${REGISTRY_NAME}"; then
+    return
+  fi
+
+  if docker ps -a --format '{{.Names}}' | grep -qx "${REGISTRY_NAME}"; then
+    docker start "${REGISTRY_NAME}"
+    return
+  fi
+
+  docker run -d -p 5001:5000 --restart=always --name "${REGISTRY_NAME}" registry:2
+}
 
 run_python() {
   python -m pip install --upgrade pip
@@ -22,13 +37,28 @@ run_python() {
 }
 
 run_docker() {
-  docker build -t "ai-user-service:${SHA_TAG}" -t ai-user-service:local services/user-service
-  docker build -t "ai-product-service:${SHA_TAG}" -t ai-product-service:local services/product-service
-  docker build -t "ai-order-service:${SHA_TAG}" -t ai-order-service:local services/order-service
+  ensure_registry
+
+  docker build -t "ai-user-service:${SHA_TAG}" -t ai-user-service:local \
+    -t "${REGISTRY_HOST}/ai-user-service:${SHA_TAG}" -t "${REGISTRY_HOST}/ai-user-service:local" \
+    services/user-service
+  docker build -t "ai-product-service:${SHA_TAG}" -t ai-product-service:local \
+    -t "${REGISTRY_HOST}/ai-product-service:${SHA_TAG}" -t "${REGISTRY_HOST}/ai-product-service:local" \
+    services/product-service
+  docker build -t "ai-order-service:${SHA_TAG}" -t ai-order-service:local \
+    -t "${REGISTRY_HOST}/ai-order-service:${SHA_TAG}" -t "${REGISTRY_HOST}/ai-order-service:local" \
+    services/order-service
 
   trivy image --format table --severity CRITICAL,HIGH --exit-code 1 --ignore-unfixed "ai-user-service:${SHA_TAG}"
   trivy image --format table --severity CRITICAL,HIGH --exit-code 1 --ignore-unfixed "ai-product-service:${SHA_TAG}"
   trivy image --format table --severity CRITICAL,HIGH --exit-code 1 --ignore-unfixed "ai-order-service:${SHA_TAG}"
+
+  docker push "${REGISTRY_HOST}/ai-user-service:${SHA_TAG}"
+  docker push "${REGISTRY_HOST}/ai-user-service:local"
+  docker push "${REGISTRY_HOST}/ai-product-service:${SHA_TAG}"
+  docker push "${REGISTRY_HOST}/ai-product-service:local"
+  docker push "${REGISTRY_HOST}/ai-order-service:${SHA_TAG}"
+  docker push "${REGISTRY_HOST}/ai-order-service:local"
 }
 
 run_kubernetes() {
@@ -62,6 +92,10 @@ PY
   kubectl apply -f kubernetes/user-service
   kubectl apply -f kubernetes/product-service
   kubectl apply -f kubernetes/order-service
+  kubectl rollout restart deployment/user-service deployment/product-service deployment/order-service
+  kubectl rollout status deployment/user-service --timeout=120s
+  kubectl rollout status deployment/product-service --timeout=120s
+  kubectl rollout status deployment/order-service --timeout=120s
 }
 
 case "${STAGE}" in

@@ -16,8 +16,8 @@ spec:
     spec:
       containers:
         - name: product-service
-          image: ai-product-service:local
-          imagePullPolicy: Never
+          image: localhost:5001/ai-product-service:local
+          imagePullPolicy: Always
           ports:
             - containerPort: 8000
           envFrom:

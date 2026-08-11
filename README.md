@@ -24,8 +24,8 @@ Dockerfiles, Kubernetes manifests, and a GitHub Actions workflow.
 - Local runtime target is macOS with Docker Desktop and Kubernetes enabled.
 - Python version is 3.12 or newer.
 - GitHub Actions is the CI/CD engine.
-- Docker images are built locally in CI for the POC; registry publishing can be
-  added later.
+- Docker images are built locally and pushed to a local registry on
+  `localhost:5001` so Docker Desktop Kubernetes can pull them.
 - Kubernetes deployment targets Docker Desktop Kubernetes for Phase 1.
 - GitHub webhook delivery reaches the local webhook receiver through a tunnel such
   as ngrok or Cloudflare Tunnel.
@@ -234,6 +234,10 @@ chmod +x scripts/deploy-local.sh
 ./scripts/deploy-local.sh
 ```
 
+The deploy script starts `ai-platform-registry` on `localhost:5001` when needed,
+builds the three service images, pushes them to that local registry, applies the
+manifests, restarts deployments, and waits for rollout completion.
+
 Run the same CI/CD path locally inside Docker:
 
 ```bash
@@ -242,7 +246,8 @@ scripts/run-in-ci-container.sh all
 
 This builds a reusable CI toolbox image, runs Python checks, builds and scans all
 service images, validates manifests, and applies them to Docker Desktop
-Kubernetes. Trivy cache is stored in `/tmp/ai-platform-trivy-cache` by default.
+Kubernetes. The same local registry is used for image pulls. Trivy cache is
+stored in `/tmp/ai-platform-trivy-cache` by default.
 
 Check services:
 
