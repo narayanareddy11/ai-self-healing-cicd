@@ -1,0 +1,21 @@
+name: ci-cd
+
+on:
+  push:
+    branches:
+      - main
+      - "ai-remediation/**"
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  complete-cicd:
+    name: complete-cicd-deploy
+    runs-on: [self-hosted, local-mac]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Dockerized CI/CD and deployment
+        run: scripts/run-in-ci-container.sh all

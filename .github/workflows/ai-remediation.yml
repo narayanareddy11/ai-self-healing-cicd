@@ -1,0 +1,32 @@
+name: ai-remediation
+
+on:
+  workflow_run:
+    workflows:
+      - ci-cd
+    types:
+      - completed
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+
+jobs:
+  rca-and-pr:
+    name: rca-agent-remediation-pr
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: [self-hosted, local-mac]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run appropriate RCA agent and raise PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FAILED_RUN_ID: ${{ github.event.workflow_run.id }}
+          FAILED_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          FAILED_HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: scripts/run-in-ci-container.sh ai-remediation
