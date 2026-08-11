@@ -35,4 +35,4 @@ def test_list_users() -> None:
     response = client.get("/users")
 
     assert response.status_code == 200
-    assert response.json()[0]["email"] == "wrong@example.com"
+    assert response.json()[0]["email"] == "ada@example.com"
