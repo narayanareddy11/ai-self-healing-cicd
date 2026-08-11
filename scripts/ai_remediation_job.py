@@ -149,7 +149,7 @@ def verify_changed_files(category: str) -> VerificationResult:
         commands.extend(
             [
                 ["python", "-m", "ruff", "check", "services", "ai_platform", "tests", "scripts"],
-                ["python", "-m", "pytest"],
+                ["python", "-m", "pytest", "-o", "cache_dir=/tmp/pytest-cache"],
             ]
         )
     elif category == "KUBERNETES":

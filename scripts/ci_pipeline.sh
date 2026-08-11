@@ -17,7 +17,7 @@ run_python() {
     "uvicorn[standard]>=0.30.0" \
     "bandit>=1.7.9"
   python -m ruff check services ai_platform tests scripts
-  python -m pytest
+  python -m pytest -o cache_dir=/tmp/pytest-cache
   python -m bandit -r services ai_platform scripts -x "services/user-service/tests,services/product-service/tests,services/order-service/tests,tests"
 }
 
