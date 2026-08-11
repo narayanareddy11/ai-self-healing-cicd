@@ -4,6 +4,7 @@ from ai_platform.classifier.classifier import FailureClassifier
 from ai_platform.collectors.evidence import EvidenceCollector
 from ai_platform.collectors.redaction import redact_secrets
 from ai_platform.github.client import GitHubPullRequestClient
+from ai_platform.llm.ollama import OllamaRCAEnhancer
 from ai_platform.models.state import (
     FailureCategory,
     FailureEvent,
@@ -125,6 +126,24 @@ def test_pr_plan_contains_human_review_notice() -> None:
     assert plan.branch_name == "ai-remediation/inc123"
     assert "Human review is required" in plan.body
     assert "[AI Remediation]" in plan.title
+
+
+def test_ollama_enhancer_can_be_disabled(monkeypatch) -> None:
+    monkeypatch.setenv("LLM_PROVIDER", "none")
+    rca = RCAResult(
+        failure_type=FailureCategory.UNIT_TEST,
+        root_cause="A test failed.",
+        observed_evidence=["pytest failed"],
+        inference="Test behavior regression.",
+        recommended_fix="Fix the assertion.",
+        files_to_modify=["services/user-service/app/main.py"],
+        confidence_score=0.8,
+        risk_level=RiskLevel.LOW,
+    )
+
+    enhanced = OllamaRCAEnhancer().enhance(rca, EvidenceCollector().collect(sample_event(), FailureCategory.UNIT_TEST, "", []))
+
+    assert enhanced == rca
 
 
 def test_orchestrator_dry_run_creates_pr_plan_route() -> None:

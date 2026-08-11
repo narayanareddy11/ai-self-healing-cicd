@@ -3,14 +3,17 @@ set -euo pipefail
 
 IMAGE_NAME="${CI_TOOLBOX_IMAGE:-ai-platform-ci-tools:local}"
 COMMAND="${1:-all}"
+TRIVY_CACHE_DIR="${TRIVY_CACHE_DIR:-${PWD}/.trivy-cache}"
 
 docker build -t "${IMAGE_NAME}" -f docker/ci/Dockerfile .
+mkdir -p "${TRIVY_CACHE_DIR}"
 
 DOCKER_ARGS=(
   --rm
   -v "${PWD}:/workspace"
   -w /workspace
   -v /var/run/docker.sock:/var/run/docker.sock
+  -v "${TRIVY_CACHE_DIR}:/root/.cache/trivy"
   -e GITHUB_TOKEN="${GITHUB_TOKEN:-}"
   -e GITHUB_REPOSITORY="${GITHUB_REPOSITORY:-}"
   -e GITHUB_RUN_ID="${GITHUB_RUN_ID:-}"
@@ -19,12 +22,15 @@ DOCKER_ARGS=(
   -e FAILED_RUN_ID="${FAILED_RUN_ID:-}"
   -e FAILED_HEAD_SHA="${FAILED_HEAD_SHA:-}"
   -e FAILED_HEAD_BRANCH="${FAILED_HEAD_BRANCH:-}"
+  -e LLM_PROVIDER="${LLM_PROVIDER:-ollama}"
+  -e LLM_MODEL="${LLM_MODEL:-qwen2.5:3b}"
+  -e OLLAMA_BASE_URL="${OLLAMA_BASE_URL:-http://host.docker.internal:11434}"
 )
 
 if [[ -d /Users/admin/.kube ]]; then
-  DOCKER_ARGS+=(-v /Users/admin/.kube:/root/.kube:ro)
+  DOCKER_ARGS+=(-v /Users/admin/.kube:/host-kube:ro -e KUBECONFIG=/tmp/kube/config)
 elif [[ -d "${HOME}/.kube" ]]; then
-  DOCKER_ARGS+=(-v "${HOME}/.kube:/root/.kube:ro)
+  DOCKER_ARGS+=(-v "${HOME}/.kube:/host-kube:ro" -e KUBECONFIG=/tmp/kube/config)
 fi
 
 case "${COMMAND}" in

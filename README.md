@@ -234,6 +234,16 @@ chmod +x scripts/deploy-local.sh
 ./scripts/deploy-local.sh
 ```
 
+Run the same CI/CD path locally inside Docker:
+
+```bash
+scripts/run-in-ci-container.sh all
+```
+
+This builds a reusable CI toolbox image, runs Python checks, builds and scans all
+service images, validates manifests, and applies them to Docker Desktop
+Kubernetes. Trivy cache is stored in `.trivy-cache/` and is ignored by Git.
+
 Check services:
 
 ```bash
@@ -303,3 +313,16 @@ PR creation remains human-in-the-loop:
 - It commits only verified changed files.
 - It opens a PR with RCA, evidence, risk, confidence, and verification results.
 - It never merges the PR.
+
+Local Ollama is used for RCA enrichment when available:
+
+```bash
+ollama list
+export LLM_PROVIDER=ollama
+export LLM_MODEL=qwen2.5:3b
+export OLLAMA_BASE_URL=http://host.docker.internal:11434
+```
+
+The deterministic classifier still selects exactly one specialist agent first.
+Ollama receives only focused, redacted evidence and improves the RCA text; if
+Ollama is unavailable, the deterministic RCA result is used.

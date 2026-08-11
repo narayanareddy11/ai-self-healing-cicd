@@ -26,6 +26,29 @@ run_kubernetes() {
   python -m pip install PyYAML
   python scripts/validate-kubernetes-manifests.py
 
+  if [[ -f /host-kube/config ]]; then
+    mkdir -p /tmp/kube
+    cp /host-kube/config /tmp/kube/config
+    python - <<'PY'
+from pathlib import Path
+
+import yaml
+
+config_path = Path("/tmp/kube/config")
+config = yaml.safe_load(config_path.read_text())
+for cluster in config.get("clusters", []):
+    details = cluster.get("cluster", {})
+    server = details.get("server", "")
+    if server.startswith("https://127.0.0.1:") or server.startswith("https://localhost:"):
+        details["server"] = server.replace("https://127.0.0.1:", "https://host.docker.internal:").replace(
+            "https://localhost:", "https://host.docker.internal:"
+        )
+        details.pop("certificate-authority-data", None)
+        details["insecure-skip-tls-verify"] = True
+config_path.write_text(yaml.safe_dump(config))
+PY
+  fi
+
   kubectl config use-context docker-desktop
   kubectl apply -f kubernetes/user-service
   kubectl apply -f kubernetes/product-service

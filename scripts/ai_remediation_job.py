@@ -16,6 +16,7 @@ from ai_platform.agents.router import RCAAgentRouter
 from ai_platform.classifier.classifier import FailureClassifier
 from ai_platform.collectors.evidence import EvidenceCollector
 from ai_platform.github.client import GitHubPullRequestClient
+from ai_platform.llm import OllamaRCAEnhancer
 from ai_platform.models.state import FailureEvent, VerificationResult, VerificationStatus
 
 
@@ -202,9 +203,12 @@ def main() -> int:
     evidence = EvidenceCollector().collect(event, category, logs, [])
     agent = RCAAgentRouter().select(category)
     rca = agent.analyze(evidence)
+    rca = OllamaRCAEnhancer().enhance(rca, evidence)
 
     print(f"failure_category={category.value}")
     print(f"selected_agent={agent.__class__.__name__}")
+    print(f"llm_provider={os.getenv('LLM_PROVIDER', 'ollama')}")
+    print(f"llm_model={os.getenv('LLM_MODEL', 'qwen2.5:3b')}")
     print(f"root_cause={rca.root_cause}")
 
     checkout_failed_branch(event)
