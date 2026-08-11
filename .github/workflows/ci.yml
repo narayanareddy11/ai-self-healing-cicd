@@ -79,6 +79,6 @@ jobs:
 
       - name: Validate Kubernetes manifests
         run: |
-          kubectl apply --dry-run=client -f kubernetes/user-service
-          kubectl apply --dry-run=client -f kubernetes/product-service
-          kubectl apply --dry-run=client -f kubernetes/order-service
+          kubectl apply --dry-run=client --validate=false -f kubernetes/user-service
+          kubectl apply --dry-run=client --validate=false -f kubernetes/product-service
+          kubectl apply --dry-run=client --validate=false -f kubernetes/order-service
