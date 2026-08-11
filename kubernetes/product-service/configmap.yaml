@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: product-service-config
+data:
+  SERVICE_NAME: product-service
+  LOG_LEVEL: INFO
