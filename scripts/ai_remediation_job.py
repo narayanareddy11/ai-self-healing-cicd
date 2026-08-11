@@ -128,7 +128,23 @@ def apply_fix(category: str, logs: str) -> list[str]:
 
 
 def verify_changed_files(category: str) -> VerificationResult:
-    commands = [["python", "-m", "pip", "install", "-e", ".[security]"]]
+    commands = [
+        [
+            "python",
+            "-m",
+            "pip",
+            "install",
+            "fastapi>=0.115.0",
+            "httpx>=0.27.0",
+            "langgraph>=1.2.9,<2.0.0",
+            "pydantic>=2.8.0",
+            "pytest>=8.3.0",
+            "PyYAML>=6.0.0",
+            "ruff>=0.6.0",
+            "uvicorn[standard]>=0.30.0",
+            "bandit>=1.7.9",
+        ]
+    ]
     if category == "UNIT_TEST":
         commands.extend(
             [

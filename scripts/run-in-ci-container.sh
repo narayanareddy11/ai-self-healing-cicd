@@ -25,6 +25,7 @@ DOCKER_ARGS=(
   -e LLM_PROVIDER="${LLM_PROVIDER:-ollama}"
   -e LLM_MODEL="${LLM_MODEL:-qwen2.5:3b}"
   -e OLLAMA_BASE_URL="${OLLAMA_BASE_URL:-http://host.docker.internal:11434}"
+  -e PYTHONPATH=/workspace
 )
 
 if [[ -d /Users/admin/.kube ]]; then

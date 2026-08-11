@@ -6,7 +6,16 @@ SHA_TAG="${GITHUB_SHA:-local}"
 
 run_python() {
   python -m pip install --upgrade pip
-  python -m pip install -e ".[security]"
+  python -m pip install \
+    "fastapi>=0.115.0" \
+    "httpx>=0.27.0" \
+    "langgraph>=1.2.9,<2.0.0" \
+    "pydantic>=2.8.0" \
+    "pytest>=8.3.0" \
+    "PyYAML>=6.0.0" \
+    "ruff>=0.6.0" \
+    "uvicorn[standard]>=0.30.0" \
+    "bandit>=1.7.9"
   python -m ruff check services ai_platform tests scripts
   python -m pytest
   python -m bandit -r services ai_platform scripts -x "services/user-service/tests,services/product-service/tests,services/order-service/tests,tests"
