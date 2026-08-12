@@ -99,6 +99,7 @@ def build_event(repo: str, run_data: dict[str, Any], failed_job: dict[str, Any])
 
 def checkout_failed_branch(event: FailureEvent) -> str:
     branch_name = f"ai-remediation/{event.incident_id}"
+    run(["git", "config", "--global", "--add", "safe.directory", str(Path.cwd())])
     run(["git", "config", "user.email", "ai-remediation@example.com"])
     run(["git", "config", "user.name", "AI Remediation Agent"])
     run(["git", "fetch", "origin", event.branch])

@@ -70,6 +70,13 @@ def test_classifier_routes_unit_tests() -> None:
     assert category == FailureCategory.UNIT_TEST
 
 
+def test_classifier_routes_docker_failure_even_after_pytest_logs() -> None:
+    logs = "pytest 20 passed\nERROR: failed to solve: \"/requirements-broken.txt\": not found"
+    category = FailureClassifier().classify("complete-cicd-deploy", "Run Dockerized CI/CD and deployment", logs)
+
+    assert category == FailureCategory.DOCKER
+
+
 def test_evidence_redacts_secrets() -> None:
     redacted = redact_secrets("token=ghp_abcdefghijklmnopqrstuvwxyz123456")
 
