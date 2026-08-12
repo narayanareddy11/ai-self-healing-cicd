@@ -169,6 +169,20 @@ def test_docker_remediation_repairs_missing_requirements_copy(monkeypatch, tmp_p
     assert "COPY requirements.txt ." in dockerfile.read_text()
 
 
+def test_docker_remediation_inspects_dockerfile_when_logs_do_not_match(monkeypatch, tmp_path) -> None:
+    service_dir = tmp_path / "services" / "user-service"
+    service_dir.mkdir(parents=True)
+    (service_dir / "requirements.txt").write_text("fastapi\n")
+    dockerfile = service_dir / "Dockerfile"
+    dockerfile.write_text("FROM python:3.12-slim\nCOPY requirements-broken.txt .\n")
+
+    monkeypatch.chdir(tmp_path)
+    changed_files = fix_dockerfile_missing_copy("docker build failed")
+
+    assert changed_files == ["services/user-service/Dockerfile"]
+    assert "COPY requirements.txt ." in dockerfile.read_text()
+
+
 def test_orchestrator_dry_run_creates_pr_plan_route() -> None:
     class PassingVerifier:
         def run(self, commands):

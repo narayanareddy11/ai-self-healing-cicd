@@ -129,14 +129,23 @@ def fix_unit_test_from_pytest_log(logs: str) -> list[str]:
 def fix_dockerfile_missing_copy(logs: str) -> list[str]:
     missing_files = set(re.findall(r'"/([^"/]+)": not found', logs))
     missing_files.update(re.findall(r"failed to calculate checksum.*?/([^/\s:]+): not found", logs))
-    if not missing_files:
-        return []
 
     changed_files: list[str] = []
     for dockerfile in Path("services").glob("*/Dockerfile"):
         service_dir = dockerfile.parent
         content = dockerfile.read_text()
         updated = content
+
+        for copy_source in re.findall(r"(?m)^COPY\s+([^\s]+)\s+", content):
+            normalized_source = copy_source.strip("\"'")
+            if "/" in normalized_source:
+                continue
+            if (
+                normalized_source.startswith("requirements")
+                and not (service_dir / normalized_source).exists()
+                and (service_dir / "requirements.txt").exists()
+            ):
+                updated = updated.replace(copy_source, "requirements.txt", 1)
 
         for missing_file in missing_files:
             if missing_file not in updated:
