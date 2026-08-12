@@ -41,8 +41,12 @@ case "${COMMAND}" in
     docker run "${DOCKER_ARGS[@]}" "${IMAGE_NAME}" bash -lc "scripts/ci_pipeline.sh ${COMMAND}"
     ;;
   ai-remediation)
-    docker run "${DOCKER_ARGS[@]}" "${IMAGE_NAME}" bash -lc '
-      python -m pip install \
+    docker run \
+      "${DOCKER_ARGS[@]}" \
+      --user "$(id -u):$(id -g)" \
+      -e HOME=/tmp \
+      "${IMAGE_NAME}" bash -lc '
+      python -m pip install --user \
         "fastapi>=0.115.0" \
         "httpx>=0.27.0" \
         "langgraph>=1.2.9,<2.0.0" \
