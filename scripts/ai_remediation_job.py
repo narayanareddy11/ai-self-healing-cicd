@@ -21,7 +21,11 @@ from ai_platform.models.state import FailureEvent, VerificationResult, Verificat
 
 
 def run(argv: list[str], check: bool = True) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(argv, check=check, capture_output=True, text=True)  # nosec B603
+    completed = subprocess.run(argv, check=False, capture_output=True, text=True)  # nosec B603
+    if check and completed.returncode != 0:
+        output = "\n".join(part for part in (completed.stdout, completed.stderr) if part)
+        raise RuntimeError(f"Command failed ({completed.returncode}): {' '.join(argv)}\n{output}")
+    return completed
 
 
 def github_api(path: str, method: str = "GET", data: dict[str, Any] | None = None) -> Any:
@@ -100,8 +104,8 @@ def build_event(repo: str, run_data: dict[str, Any], failed_job: dict[str, Any])
 def checkout_failed_branch(event: FailureEvent) -> str:
     branch_name = f"ai-remediation/{event.incident_id}"
     run(["git", "config", "--global", "--add", "safe.directory", str(Path.cwd())])
-    run(["git", "config", "user.email", "ai-remediation@example.com"])
-    run(["git", "config", "user.name", "AI Remediation Agent"])
+    run(["git", "config", "--global", "user.email", "ai-remediation@example.com"])
+    run(["git", "config", "--global", "user.name", "AI Remediation Agent"])
     run(["git", "fetch", "origin", event.branch])
     run(["git", "switch", "-C", branch_name, f"origin/{event.branch}"])
     return branch_name
