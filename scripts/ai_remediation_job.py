@@ -121,9 +121,36 @@ def fix_unit_test_from_pytest_log(logs: str) -> list[str]:
     return [str(file_path)]
 
 
+def fix_dockerfile_missing_copy(logs: str) -> list[str]:
+    missing_files = set(re.findall(r'"/([^"/]+)": not found', logs))
+    missing_files.update(re.findall(r"failed to calculate checksum.*?/([^/\s:]+): not found", logs))
+    if not missing_files:
+        return []
+
+    changed_files: list[str] = []
+    for dockerfile in Path("services").glob("*/Dockerfile"):
+        service_dir = dockerfile.parent
+        content = dockerfile.read_text()
+        updated = content
+
+        for missing_file in missing_files:
+            if missing_file not in updated:
+                continue
+            if missing_file.startswith("requirements") and (service_dir / "requirements.txt").exists():
+                updated = updated.replace(missing_file, "requirements.txt")
+
+        if updated != content:
+            dockerfile.write_text(updated)
+            changed_files.append(str(dockerfile))
+
+    return changed_files
+
+
 def apply_fix(category: str, logs: str) -> list[str]:
     if category == "UNIT_TEST":
         return fix_unit_test_from_pytest_log(logs)
+    if category == "DOCKER":
+        return fix_dockerfile_missing_copy(logs)
     return []
 
 
@@ -150,6 +177,14 @@ def verify_changed_files(category: str) -> VerificationResult:
             [
                 ["python", "-m", "ruff", "check", "services", "ai_platform", "tests", "scripts"],
                 ["python", "-m", "pytest", "-o", "cache_dir=/tmp/pytest-cache"],
+            ]
+        )
+    elif category == "DOCKER":
+        commands.extend(
+            [
+                ["docker", "build", "-t", "ai-user-service:verify", "services/user-service"],
+                ["docker", "build", "-t", "ai-product-service:verify", "services/product-service"],
+                ["docker", "build", "-t", "ai-order-service:verify", "services/order-service"],
             ]
         )
     elif category == "KUBERNETES":

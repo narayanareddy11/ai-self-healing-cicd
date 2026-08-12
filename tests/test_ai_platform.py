@@ -20,6 +20,7 @@ from ai_platform.remediation.guardrails import GuardrailEngine
 from ai_platform.verification.runner import VerificationRunner
 from ai_platform.webhook.parser import parse_workflow_failure
 from ai_platform.webhook.signature import build_signature, verify_signature
+from scripts.ai_remediation_job import fix_dockerfile_missing_copy
 
 
 def sample_event() -> FailureEvent:
@@ -144,6 +145,21 @@ def test_ollama_enhancer_can_be_disabled(monkeypatch) -> None:
     enhanced = OllamaRCAEnhancer().enhance(rca, EvidenceCollector().collect(sample_event(), FailureCategory.UNIT_TEST, "", []))
 
     assert enhanced == rca
+
+
+def test_docker_remediation_repairs_missing_requirements_copy(monkeypatch, tmp_path) -> None:
+    service_dir = tmp_path / "services" / "user-service"
+    service_dir.mkdir(parents=True)
+    (service_dir / "requirements.txt").write_text("fastapi\n")
+    dockerfile = service_dir / "Dockerfile"
+    dockerfile.write_text("FROM python:3.12-slim\nCOPY requirements-broken.txt .\n")
+    logs = 'failed to calculate checksum of ref: "/requirements-broken.txt": not found'
+
+    monkeypatch.chdir(tmp_path)
+    changed_files = fix_dockerfile_missing_copy(logs)
+
+    assert changed_files == ["services/user-service/Dockerfile"]
+    assert "COPY requirements.txt ." in dockerfile.read_text()
 
 
 def test_orchestrator_dry_run_creates_pr_plan_route() -> None:
