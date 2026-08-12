@@ -41,6 +41,7 @@ case "${COMMAND}" in
     docker run "${DOCKER_ARGS[@]}" "${IMAGE_NAME}" bash -lc "scripts/ci_pipeline.sh ${COMMAND}"
     ;;
   ai-remediation)
+    chmod -R a+rwX .git services
     docker run \
       "${DOCKER_ARGS[@]}" \
       --user "$(id -u):$(id -g)" \
