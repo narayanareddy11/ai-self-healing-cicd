@@ -41,7 +41,19 @@ case "${COMMAND}" in
     docker run "${DOCKER_ARGS[@]}" "${IMAGE_NAME}" bash -lc "scripts/ci_pipeline.sh ${COMMAND}"
     ;;
   ai-remediation)
-    docker run "${DOCKER_ARGS[@]}" "${IMAGE_NAME}" bash -lc "python scripts/ai_remediation_job.py"
+    docker run "${DOCKER_ARGS[@]}" "${IMAGE_NAME}" bash -lc '
+      python -m pip install \
+        "fastapi>=0.115.0" \
+        "httpx>=0.27.0" \
+        "langgraph>=1.2.9,<2.0.0" \
+        "pydantic>=2.8.0" \
+        "pytest>=8.3.0" \
+        "PyYAML>=6.0.0" \
+        "ruff>=0.6.0" \
+        "uvicorn[standard]>=0.30.0" \
+        "bandit>=1.7.9" \
+      && python scripts/ai_remediation_job.py
+    '
     ;;
   *)
     echo "Unknown command: ${COMMAND}" >&2
